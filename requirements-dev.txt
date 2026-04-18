@@ -1,0 +1,8 @@
+# Development dependencies
+# Install with: pip install -r requirements-dev.txt
+
+# Linter + formatter
+ruff>=0.6.0
+
+# ONNX export (only needed for browser demo)
+onnxscript>=0.6.2

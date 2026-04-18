@@ -1,0 +1,12 @@
+# Runtime dependencies
+# Install with: pip install -r requirements.txt
+
+# Deep learning framework for training and inference
+torch>=2.11.0
+
+# BPE tokenizer (HuggingFace)
+tokenizers>=0.22.2
+
+# ONNX model format and runtime (for loading/running exported models)
+onnx>=1.21.0
+onnxruntime>=1.24.4
