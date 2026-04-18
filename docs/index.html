@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FrogLM</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+
+  :root{
+    --bg:#0c0c0c;--glass:rgba(255,255,255,0.03);--glass-border:rgba(255,255,255,0.06);
+    --glass-user:rgba(255,255,255,0.05);--glass-frog:rgba(74,222,128,0.06);
+    --frog-border:rgba(74,222,128,0.12);--text:#e4e4e7;--dim:#52525b;
+    --accent:#4ade80;--radius:16px;
+  }
+
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100dvh;overflow:hidden}
+
+  /* ── Bento Shell ── */
+  .bento{
+    max-width:700px;margin:0 auto;height:100dvh;padding:12px;
+    display:grid;gap:10px;
+    grid-template-rows:auto 1fr auto;
+    grid-template-columns:1fr;
+  }
+
+  /* ── Header Card ── */
+  .card-header{
+    background:var(--glass);border:1px solid var(--glass-border);
+    border-radius:var(--radius);padding:14px 18px;
+    display:flex;align-items:center;justify-content:space-between;
+    backdrop-filter:blur(12px);
+  }
+  .card-header .id{display:flex;align-items:center;gap:10px}
+  .card-header .id .icon{
+    width:32px;height:32px;border-radius:10px;
+    background:linear-gradient(135deg,#065f46,#4ade80);
+    display:flex;align-items:center;justify-content:center;font-size:16px;
+  }
+  .card-header .id h1{font-size:14px;font-weight:600}
+  .card-header .meta{font-size:11px;color:var(--dim);display:flex;align-items:center;gap:6px}
+  .card-header .meta .pulse{width:6px;height:6px;border-radius:50%;background:var(--dim)}
+  .card-header .meta .pulse.live{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+
+  /* ── Chat Feed ── */
+  .card-feed{
+    background:var(--glass);border:1px solid var(--glass-border);
+    border-radius:var(--radius);backdrop-filter:blur(12px);
+    overflow:hidden;display:flex;flex-direction:column;min-height:0;
+  }
+  .feed{
+    flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;
+    min-height:0;-webkit-overflow-scrolling:touch;
+  }
+
+  /* ── MessageBubble ── */
+  .bubble{
+    max-width:78%;padding:11px 15px;font-size:14px;line-height:1.6;
+    word-wrap:break-word;backdrop-filter:blur(8px);
+  }
+  .bubble[data-role="user"]{
+    align-self:flex-end;
+    background:var(--glass-user);border:1px solid var(--glass-border);
+    border-radius:var(--radius) var(--radius) 4px var(--radius);color:#d4d4d8;
+  }
+  .bubble[data-role="frog"]{
+    align-self:flex-start;
+    background:var(--glass-frog);border:1px solid var(--frog-border);
+    border-radius:var(--radius) var(--radius) var(--radius) 4px;color:#bbf7d0;
+  }
+  .bubble[data-role="system"]{
+    align-self:center;background:none;border:none;
+    color:var(--dim);font-size:12px;backdrop-filter:none;
+  }
+
+  .typing{align-self:flex-start;display:flex;gap:5px;padding:12px 15px}
+  .typing i{
+    width:5px;height:5px;border-radius:50%;background:var(--accent);
+    opacity:0.25;animation:tp 1.2s infinite ease-in-out;
+  }
+  .typing i:nth-child(2){animation-delay:0.15s}
+  .typing i:nth-child(3){animation-delay:0.3s}
+  @keyframes tp{0%,100%{opacity:0.2;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+
+  /* ── Suggestions (horizontal scroll inside feed card) ── */
+  .suggestions{
+    padding:8px 20px 12px;border-top:1px solid var(--glass-border);
+    display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;
+  }
+  .suggestions::-webkit-scrollbar{display:none}
+  .suggestions button{
+    flex-shrink:0;font-family:inherit;font-size:12px;
+    background:rgba(255,255,255,0.04);color:var(--dim);
+    border:1px solid var(--glass-border);border-radius:99px;
+    padding:7px 14px;cursor:pointer;transition:0.15s;white-space:nowrap;
+  }
+  .suggestions button:hover{color:var(--accent);border-color:var(--frog-border)}
+  .suggestions button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  /* ── InputArea Card ── */
+  .card-input{
+    background:var(--glass);border:1px solid var(--glass-border);
+    border-radius:var(--radius);backdrop-filter:blur(12px);
+    padding:10px 12px;display:flex;align-items:center;gap:10px;
+  }
+  .card-input input{
+    flex:1;background:none;border:none;outline:none;
+    color:var(--text);font-family:inherit;font-size:14px;padding:4px 6px;
+  }
+  .card-input input::placeholder{color:#3f3f46}
+  .card-input button{
+    width:36px;height:36px;border-radius:10px;border:none;
+    background:var(--accent);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;transition:0.15s;
+  }
+  .card-input button:hover{opacity:0.85}
+  .card-input button:disabled{opacity:0.15;cursor:default}
+  .card-input button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .card-input button svg{width:16px;height:16px;fill:#000}
+
+  /* ── A11y ── */
+  [aria-live]{clip:rect(0,0,0,0);position:absolute;width:1px;height:1px;overflow:hidden}
+</style>
+</head>
+<body>
+
+<div class="bento" role="main">
+  <!-- Header Card -->
+  <div class="card-header">
+    <div class="id"><div class="icon">🐸</div><h1>FrogLM</h1></div>
+    <div class="meta"><span id="status">loading</span></div>
+  </div>
+
+  <!-- Chat Feed Card -->
+  <div class="card-feed">
+    <div class="feed" id="feed" role="log" aria-label="Chat messages"></div>
+    <div class="suggestions" role="toolbar" aria-label="Suggested prompts">
+      <button onclick="send('hi frog')">hi frog</button>
+      <button onclick="send('are you hungry')">are you hungry</button>
+      <button onclick="send('tell me a joke')">tell me a joke</button>
+      <button onclick="send('do you like rain')">do you like rain</button>
+      <button onclick="send('what is bitcoin')">what is bitcoin</button>
+      <button onclick="send('what is the meaning of life')">meaning of life</button>
+      <button onclick="send('goodnight frog')">goodnight frog</button>
+      <button onclick="send('were you a tadpole')">were you a tadpole</button>
+    </div>
+  </div>
+
+  <!-- Input Card -->
+  <div class="card-input">
+    <input id="inp" type="text" placeholder="talk to frog..." autocomplete="off" disabled
+           aria-label="Message input" tabindex="0">
+    <button id="btn" onclick="go()" disabled aria-label="Send message" tabindex="0">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- Screen reader announcements -->
+<div aria-live="polite" aria-atomic="true" id="sr"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.21.0/dist/ort.min.js"></script>
+<script>
+const MX=128,BOS=1,EOS=2;let S,T;
+const feed=document.getElementById('feed'),inp=document.getElementById('inp'),
+      btn=document.getElementById('btn'),sr=document.getElementById('sr'),
+      statusEl=document.getElementById('status');
+
+// ── ByteLevel BPE ──
+const B2C={},C2B={};(()=>{const b=[];for(let i=33;i<=126;i++)b.push(i);for(let i=161;i<=172;i++)b.push(i);for(let i=174;i<=255;i++)b.push(i);const c=[...b];let n=0;for(let i=0;i<256;i++){if(!b.includes(i)){b.push(i);c.push(256+n);n++}}for(let i=0;i<b.length;i++){B2C[b[i]]=String.fromCharCode(c[i]);C2B[String.fromCharCode(c[i])]=b[i]}})();
+
+class Tk{
+  constructor(d){this.v=d.model.vocab;this.r={};for(const[t,i]of Object.entries(this.v))this.r[i]=t;this.m=new Map();(d.model.merges||[]).forEach((m,i)=>this.m.set(Array.isArray(m)?m.join(' '):m,i))}
+  enc(s){const ids=[];for(const w of(s.match(/'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+/gu)||[s]).map(w=>Array.from(new TextEncoder().encode(w)).map(b=>B2C[b])))for(const t of this._b(w))ids.push(this.v[t]??0);return ids}
+  dec(ids){const b=[];for(const id of ids){const t=this.r[id];if(!t||id<=2)continue;for(const c of t){const v=C2B[c];if(v!==undefined)b.push(v)}}return new TextDecoder().decode(new Uint8Array(b))}
+  _b(w){let t=[...w];while(t.length>1){let b=Infinity,x=-1;for(let i=0;i<t.length-1;i++){const r=this.m.get(t[i]+' '+t[i+1]);if(r!==undefined&&r<b){b=r;x=i}}if(x<0)break;t=[...t.slice(0,x),t[x]+t[x+1],...t.slice(x+2)]}return t}
+}
+
+// ── Components ──
+function MessageBubble(text, role){
+  const el=document.createElement('div');
+  el.className='bubble';el.dataset.role=role;el.textContent=text;
+  el.setAttribute('aria-label',role==='frog'?'Frog says: '+text:'You said: '+text);
+  return el;
+}
+
+function addMessage(text,role){
+  feed.appendChild(MessageBubble(text,role));
+  requestAnimationFrame(()=>feed.scrollTop=feed.scrollHeight);
+  if(role==='frog') sr.textContent='Frog says: '+text;
+}
+
+function showTyping(){
+  const d=document.createElement('div');d.className='typing';d.id='tp';
+  d.innerHTML='<i></i><i></i><i></i>';d.setAttribute('aria-label','Frog is thinking');
+  feed.appendChild(d);requestAnimationFrame(()=>feed.scrollTop=feed.scrollHeight);
+  sr.textContent='Frog is thinking...';
+}
+function hideTyping(){document.getElementById('tp')?.remove()}
+
+// ── Generation ──
+async function gen(text){
+  const u=T.enc('user\n'+text),nl=T.enc('\n'),a=T.enc('assistant\n');
+  let ids=[BOS,...u,EOS,...nl,BOS,...a];
+  for(let i=0;i<64&&ids.length<MX;i++){
+    const o=await S.run({input_ids:new ort.Tensor('int64',BigInt64Array.from(ids.map(x=>BigInt(x))),[1,ids.length])});
+    const l=o.logits.data,V=o.logits.dims[2],sl=l.slice((ids.length-1)*V,ids.length*V);
+    let sc=Array.from(sl).map((v,i)=>[v/0.7,i]);sc.sort((a,b)=>b[0]-a[0]);sc=sc.slice(0,40);
+    const mx=sc[0][0],ex=sc.map(s=>Math.exp(s[0]-mx)),sm=ex.reduce((a,b)=>a+b),pr=ex.map(e=>e/sm);
+    let r=Math.random(),nx=sc[0][1];for(let j=0;j<pr.length;j++){r-=pr[j];if(r<=0){nx=sc[j][1];break}}
+    if(nx===EOS)break;ids.push(nx);
+  }
+  return T.dec(ids.slice([BOS,...u,EOS,...nl,BOS,...a].length));
+}
+
+// ── ChatContainer logic ──
+async function send(t){
+  if(!S||!t.trim())return;
+  addMessage(t,'user');inp.value='';inp.disabled=true;btn.disabled=true;showTyping();
+  try{const r=await gen(t.trim());hideTyping();addMessage(r||'...','frog')}
+  catch(e){hideTyping();addMessage('something went wrong.','system');console.error(e)}
+  inp.disabled=false;btn.disabled=false;inp.focus();
+}
+function go(){send(inp.value)}
+inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();go()}});
+
+// ── Init ──
+(async()=>{
+  try{
+    statusEl.textContent='loading';
+    T=new Tk(await(await fetch('tokenizer.json')).json());
+    S=await ort.InferenceSession.create('model_q.onnx',{executionProviders:['wasm']});
+    statusEl.textContent='8.7M params · wasm';
+    inp.disabled=false;btn.disabled=false;inp.focus();
+    addMessage('ribbit. the pond is nice today.','frog');
+  }catch(e){statusEl.textContent='error';addMessage('failed to load model.','system');console.error(e)}
+})();
+</script>
+</body>
+</html>
