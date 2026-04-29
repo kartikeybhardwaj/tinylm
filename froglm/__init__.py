@@ -1,7 +1,5 @@
-"""FrogLM — A tiny frog brain."""
+"""FrogLM — a tiny frog brain. Personality package."""
 
-from .config import FrogConfig, TrainConfig
-from .inference import FrogInference
-from .model import FrogLM
+from core import ModelConfig, TrainConfig, TinyLM, LMInference
 
-__all__ = ["FrogConfig", "TrainConfig", "FrogLM", "FrogInference"]
+__all__ = ["ModelConfig", "TrainConfig", "TinyLM", "LMInference"]
