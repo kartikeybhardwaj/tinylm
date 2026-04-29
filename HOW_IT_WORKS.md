@@ -1,15 +1,15 @@
-# How FrogLM Works - End to End
+# How TinyLM Works — End to End
 
-This document explains every step of building FrogLM, from raw idea to a working chatbot in your browser.
+This document explains every step of building a TinyLM personality (like FrogLM or CatLM), from raw idea to a working chatbot in your browser.
 
 ---
 
 ## The Big Picture
 
 ```plaintext
-[Idea: "frog personality"]
+[Idea: "frog personality" or "cat personality"]
         ↓
-[Generate 60K fake conversations]
+[Generate 60K fake conversations using personality templates]
         ↓
 [Train a tokenizer on those conversations]
         ↓
@@ -20,7 +20,7 @@ This document explains every step of building FrogLM, from raw idea to a working
 [Export to ONNX → run in browser via WebAssembly]
 ```
 
-That's it. Every LLM works this way - the only difference between FrogLM and GPT-4 is scale.
+That's it. Every LLM works this way - the only difference between TinyLM and GPT-4 is scale. The only difference between FrogLM and CatLM is the training data.
 
 ---
 
@@ -39,7 +39,7 @@ This matters because the personality lives in the **training data**, not in a sy
 
 ## Step 2: Generate Training Data
 
-**File:** `froglm/data/personality.py`, `user_prompts.py`, `vocabulary.py`
+**File:** `froglm/data/personality (or catlm/data/personality).py`, `user_prompts.py`, `vocabulary.py`
 
 We write template generators for 61 topics. Each generator picks random words from vocabulary pools and assembles a response:
 
@@ -278,25 +278,28 @@ The JavaScript reimplements the same tokenizer and generation loop that Python d
 - Months of GPU time (not 7 minutes)
 - RLHF or DPO for alignment (not just next-token prediction)
 
-But the fundamental mechanism - predict the next token, over and over - is identical from FrogLM to GPT-4.
+But the fundamental mechanism - predict the next token, over and over - is identical from TinyLM to GPT-4.
 
 ---
 
 ## File Flow Summary
 
 ```plaintext
-vocabulary.py          → defines the frog's world (bugs, ponds, activities)
-personality.py         → generates frog responses using vocabulary
-user_prompts.py        → generates human inputs
-topics.py              → pairs them into (input, output) samples
-generator.py           → produces 60K samples as JSONL
-tokenizer.py           → trains BPE tokenizer on the JSONL
-dataset.py             → loads JSONL + tokenizes for PyTorch
-model/lm.py            → the transformer that learns from the data
-train.py               → the training loop
-inference.py           → loads trained model + generates responses
-scripts/export_onnx.py → converts to browser-friendly format
-docs/index.html        → runs it all in your browser
+# Per personality (e.g. froglm/ or catlm/):
+vocabulary.py            → defines the animal's world (word pools)
+personality.py           → generates responses using vocabulary
+user_prompts.py          → generates human inputs
+topics.py                → pairs them into (input, output) samples
+
+# Shared core/:
+core/data/generator.py   → produces 60K samples as JSONL
+core/data/tokenizer.py   → trains BPE tokenizer on the JSONL
+core/data/dataset.py     → loads JSONL + tokenizes for PyTorch
+core/model/lm.py         → the transformer that learns from the data
+core/train.py            → the training loop
+core/inference.py        → loads trained model + generates responses
+scripts/export_onnx.py   → converts to browser-friendly format
+docs/{name}/index.html   → runs it all in your browser
 ```
 
-Each file does one thing. The whole pipeline is ~2,000 lines of Python + 200 lines of JS.
+The personality files are the only thing that changes between animals. The core engine is shared.

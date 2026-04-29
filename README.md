@@ -1,22 +1,20 @@
-# FrogLM 🐸
+# TinyLM 🐸🐱
 
-A 9M parameter language model trained from scratch to talk like a frog. Built to demystify LLM training - no PhD, no GPU cluster, just one machine and a few minutes.
+Train tiny language models with distinct personalities from scratch. Each model is ~9M parameters, trains in minutes on a single GPU, and runs in the browser.
 
 ```plaintext
-You> hi frog
-Frog> oh hi there. i just hopped over from in the garden.
+You> hi frog                          You> hi cat
+Frog> oh hi there. i just hopped      Cat> oh. it is you. i was busy
+over from the garden.                 ignoring you.
 
-You> are you hungry
-Frog> my tongue is ready. i like crickets best. so crunchy.
+You> what is bitcoin                  You> what is bitcoin
+Frog> i do not know what bitcoin      Cat> is bitcoin edible. no.
+is. that is beyond the pond.          then i do not care.
 
-You> what is the meaning of life
-Frog> sit on pad. eat fly. croak at moon. that is everything.
-
-You> what is bitcoin
-Frog> i do not know what bitcoin is. that is beyond the pond.
-
-You> goodnight frog
-Frog> goodnight. night is when we frogs sing. the whole pond chorus starts up.
+You> goodnight                        You> goodnight
+Frog> goodnight. night is when we     Cat> the humans are sleeping.
+frogs sing. the whole pond chorus     this is when i come alive. time
+starts up.                            to run through the house.
 ```
 
 ---
@@ -27,39 +25,53 @@ Frog> goodnight. night is when we frogs sing. the whole pond chorus starts up.
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+```
 
+### Train a Frog
+
+```bash
 python -m froglm prepare    # generate 60K conversations + train tokenizer
 python -m froglm train      # ~7 min on Apple Silicon, ~5 min on CUDA
 python -m froglm chat       # talk to frog
 ```
 
-Or run a single prompt:
+### Train a Cat
+
+```bash
+python -m catlm prepare
+python -m catlm train
+python -m catlm chat
+```
+
+Single prompt mode:
 
 ```bash
 python -m froglm chat -p "do you like rain"
+python -m catlm chat -p "do you like dogs"
 ```
 
 ---
 
 ## Browser Demo
 
-After training, export the model and serve locally:
+After training, export and serve locally:
 
 ```bash
-make demo
+make frog-demo   # http://localhost:8000
+make cat-demo    # http://localhost:8001
 ```
 
-Opens at `http://localhost:8000`. Runs entirely client-side via WebAssembly - no server, no API keys. The quantized model is ~9MB.
+Runs entirely client-side via WebAssembly — no server, no API keys. The quantized model is ~9MB.
 
 ---
 
 ## How It Works
 
-FrogLM is a vanilla decoder-only transformer trained on 60K synthetic single-turn conversations. The personality isn't prompted — it's baked into the weights through the training data.
+Each personality is a vanilla decoder-only transformer trained on 60K synthetic single-turn conversations. The personality isn't prompted — it's baked into the weights through the training data.
 
 For a full end-to-end walkthrough of every step (with ELI5 explanations), see **[HOW_IT_WORKS.md](HOW_IT_WORKS.md)**.
 
-| Data | Value |
+| | |
 | - | - |
 | Parameters | 8.7M |
 | Layers | 6 |
@@ -75,69 +87,64 @@ No GQA, no RoPE, no SwiGLU. Standard attention + LayerNorm + ReLU FFN.
 
 ---
 
-## The Frog
-
-An amphibian - lives in the pond and on land.
-
-- Short, lowercase sentences
-- Hunts bugs with a fast sticky tongue
-- Active at night - croaks in a chorus
-- Hibernates in mud, awakens in spring
-- Hops between the pond and the garden
-- Doesn't understand human abstractions
-- Thinks about bugs constantly
-
-61 topics covering greetings, food, rain, jumping, predators, seasons, philosophy, dreams, farewells, confused/off-topic deflection, and more.
-
----
-
-## Data
-
-60K synthetic conversations generated via template composition. Each topic has a response generator that combines randomized vocabulary pools (22 bug types, 23 pond objects, 18 land objects, 31 activities) to produce unique outputs at scale.
-
-Format:
+## Architecture
 
 ```plaintext
-<|im_start|>user
-hi frog<|im_end|>
-<|im_start|>assistant
-ribbit. the pond is calm today.<|im_end|>
-```
-
----
-
-## Project Layout
-
-```plaintext
-froglm/
-├── config.py                # FrogConfig + TrainConfig
-├── device.py                # CUDA / MPS / CPU detection
-├── train.py                 # Training loop with eval + checkpointing
-├── inference.py             # FrogInference class + chat CLI
+core/                            # Shared engine (model, training, inference)
+├── config.py                    # ModelConfig + TrainConfig
+├── device.py                    # CUDA / MPS / CPU detection
+├── train.py                     # Training loop with eval + checkpointing
+├── inference.py                 # LMInference class
 ├── model/
-│   ├── attention.py         # Multi-head attention + FFN
-│   ├── block.py             # Transformer block
-│   └── lm.py                # FrogLM model
+│   ├── attention.py             # Multi-head attention + FFN
+│   ├── block.py                 # Transformer block
+│   └── lm.py                    # TinyLM model
 ├── data/
-│   ├── vocabulary.py        # Word pools + helpers
-│   ├── personality.py       # Frog response generators
-│   ├── user_prompts.py      # User input generators
-│   ├── topics.py            # Topic registry
-│   ├── generator.py         # Dataset generation
-│   ├── tokenizer.py         # BPE tokenizer training
-│   └── dataset.py           # DataLoader + dynamic padding
-├── eval/
-│   ├── cases.py             # Personality test cases
-│   └── runner.py            # Eval runner
+│   ├── dataset.py               # DataLoader + dynamic padding
+│   ├── generator.py             # Dataset generation
+│   └── tokenizer.py             # BPE tokenizer training
+└── eval/
+    └── runner.py                # Eval runner
+
+froglm/                          # 🐸 Frog personality
+├── __main__.py                  # python -m froglm
+└── data/
+    ├── vocabulary.py            # Pond, bugs, mud, garden
+    ├── personality.py           # Frog response generators (61 topics)
+    ├── user_prompts.py          # User input generators
+    ├── topics.py                # Topic registry
+    └── eval_cases.py            # Personality test cases
+
+catlm/                           # 🐱 Cat personality
+├── __main__.py                  # python -m catlm
+└── data/
+    ├── vocabulary.py            # House, furniture, prey, threats
+    ├── personality.py           # Cat response generators (48 topics)
+    ├── user_prompts.py          # User input generators
+    ├── topics.py                # Topic registry
+    └── eval_cases.py            # Personality test cases
 
 scripts/
-└── export_onnx.py           # ONNX export + quantization
+└── export_onnx.py               # ONNX export + quantization
 
 docs/
-├── index.html               # Browser demo
-├── model_q.onnx             # Quantized model (~9MB)
-└── tokenizer.json           # BPE tokenizer
+├── frog/                        # Frog browser demo
+└── cat/                         # Cat browser demo
 ```
+
+---
+
+## Adding a New Personality
+
+1. Create a new directory (e.g. `doglm/data/`)
+2. Write `vocabulary.py` — word pools for the animal's world
+3. Write `personality.py` — response generators
+4. Write `user_prompts.py` — user input generators
+5. Write `topics.py` — wire generators into `ALL_TOPICS`
+6. Write `eval_cases.py` — personality test cases
+7. Create `__main__.py` — copy from froglm/catlm, change `NAME`
+
+That's it. The core engine handles everything else.
 
 ---
 
@@ -145,23 +152,29 @@ docs/
 
 | Command | What it does |
 | - | - |
-| `python -m froglm prepare` | Generate data + train tokenizer |
-| `python -m froglm train` | Train model (best saved to `checkpoints/`) |
-| `python -m froglm chat` | Interactive chat |
+| `python -m froglm prepare` | Generate frog data + train tokenizer |
+| `python -m froglm train` | Train frog model |
+| `python -m froglm chat` | Chat with frog |
 | `python -m froglm chat -p "..."` | Single prompt |
-| `python -m froglm eval` | Run personality eval cases |
-| `make export` | Export ONNX + quantize |
-| `make demo` | Export + serve browser demo |
+| `python -m froglm eval` | Run frog eval cases |
+| `python -m catlm prepare` | Generate cat data + train tokenizer |
+| `python -m catlm train` | Train cat model |
+| `python -m catlm chat` | Chat with cat |
+| `python -m catlm eval` | Run cat eval cases |
+| `make frog-export` | Export frog ONNX + quantize |
+| `make frog-demo` | Export + serve frog browser demo |
+| `make cat-export` | Export cat ONNX + quantize |
+| `make cat-demo` | Export + serve cat browser demo |
 
 ---
 
 ## Why These Choices
 
-**Amphibian.** A frog lives on land and water. Richer worldview - gardens, rain, hibernation, night choruses.
+**Shared core, separate personalities.** The transformer, training loop, tokenizer, and inference are identical for every personality. Only the training data differs. This means adding a new animal is just writing templates — no ML code needed.
 
 **No system prompt.** Personality is in the weights. A 9M model can't follow conditional instructions anyway.
 
-**Single-turn only.** 128-token context degrades at turn 3-4. A forgetful frog is fine. Garbled output isn't.
+**Single-turn only.** 128-token context degrades at turn 3-4. A forgetful pet is fine. Garbled output isn't.
 
 **Synthetic data.** Template composition with randomized components gives consistent personality with enough variety to generalize.
 
