@@ -1,6 +1,6 @@
-.PHONY: frog-prepare frog-train frog-chat frog-eval frog-export frog-demo
-.PHONY: cat-prepare cat-train cat-chat cat-eval cat-export cat-demo
-.PHONY: clean
+.PHONY: frog-prepare frog-train frog-chat frog-eval frog-export
+.PHONY: cat-prepare cat-train cat-chat cat-eval cat-export
+.PHONY: demo clean
 
 # ── Frog ──
 frog-prepare:
@@ -18,9 +18,6 @@ frog-eval:
 frog-export:
 	PYTHONPATH=. python scripts/export_onnx.py frog
 
-frog-demo: frog-export
-	python -m http.server 8000 --directory docs/frog
-
 # ── Cat ──
 cat-prepare:
 	python -m catlm prepare
@@ -37,8 +34,9 @@ cat-eval:
 cat-export:
 	PYTHONPATH=. python scripts/export_onnx.py cat
 
-cat-demo: cat-export
-	python -m http.server 8001 --directory docs/cat
+# ── Browser demo (serves all personalities at http://localhost:8000) ──
+demo:
+	python -m http.server 8000 --directory docs
 
 # ── Cleanup ──
 clean:

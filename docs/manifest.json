@@ -1,0 +1,45 @@
+{
+  "default": "frog",
+  "personalities": [
+    {
+      "id": "frog",
+      "name": "FrogLM",
+      "label": "Frog",
+      "emoji": "🐸",
+      "accent": "#4ade80",
+      "accentDark": "#065f46",
+      "greeting": "ribbit. the pond is nice today.",
+      "placeholder": "talk to frog...",
+      "suggestions": [
+        "hi frog",
+        "are you hungry",
+        "tell me a joke",
+        "do you like rain",
+        "what is bitcoin",
+        "what is the meaning of life",
+        "goodnight frog",
+        "were you a tadpole"
+      ]
+    },
+    {
+      "id": "cat",
+      "name": "CatLM",
+      "label": "Cat",
+      "emoji": "🐱",
+      "accent": "#fb923c",
+      "accentDark": "#7c2d12",
+      "greeting": "oh. it is you. i was busy ignoring you.",
+      "placeholder": "talk to cat...",
+      "suggestions": [
+        "hi cat",
+        "are you hungry",
+        "tell me a joke",
+        "do you like dogs",
+        "what is bitcoin",
+        "what is the meaning of life",
+        "goodnight",
+        "where do you sleep"
+      ]
+    }
+  ]
+}

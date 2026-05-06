@@ -3,16 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FrogLM</title>
+<title>TinyLM</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
   *{box-sizing:border-box;margin:0;padding:0}
 
   :root{
     --bg:#0c0c0c;--glass:rgba(255,255,255,0.03);--glass-border:rgba(255,255,255,0.06);
-    --glass-user:rgba(255,255,255,0.05);--glass-frog:rgba(74,222,128,0.06);
-    --frog-border:rgba(74,222,128,0.12);--text:#e4e4e7;--dim:#52525b;
-    --accent:#4ade80;--radius:16px;
+    --glass-user:rgba(255,255,255,0.05);
+    --glass-bot:rgba(74,222,128,0.06);--bot-border:rgba(74,222,128,0.12);
+    --text:#e4e4e7;--dim:#52525b;
+    --accent:#4ade80;--accent-dark:#065f46;
+    --bot-text:#bbf7d0;
+    --radius:16px;
   }
 
   body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);height:100dvh;overflow:hidden}
@@ -29,19 +32,25 @@
   .card-header{
     background:var(--glass);border:1px solid var(--glass-border);
     border-radius:var(--radius);padding:14px 18px;
-    display:flex;align-items:center;justify-content:space-between;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
     backdrop-filter:blur(12px);
   }
-  .card-header .id{display:flex;align-items:center;gap:10px}
+  .card-header .id{display:flex;align-items:center;gap:10px;min-width:0}
   .card-header .id .icon{
     width:32px;height:32px;border-radius:10px;
-    background:linear-gradient(135deg,#065f46,#4ade80);
+    background:linear-gradient(135deg,var(--accent-dark),var(--accent));
     display:flex;align-items:center;justify-content:center;font-size:16px;
+    flex-shrink:0;
   }
-  .card-header .id h1{font-size:14px;font-weight:600}
-  .card-header .meta{font-size:11px;color:var(--dim);display:flex;align-items:center;gap:6px}
-  .card-header .meta .pulse{width:6px;height:6px;border-radius:50%;background:var(--dim)}
-  .card-header .meta .pulse.live{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+  .card-header .id h1{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card-header .right{display:flex;align-items:center;gap:10px}
+  .card-header .meta{font-size:11px;color:var(--dim)}
+  .selector{
+    font-family:inherit;font-size:12px;background:rgba(255,255,255,0.04);
+    color:var(--text);border:1px solid var(--glass-border);
+    border-radius:99px;padding:6px 10px;cursor:pointer;outline:none;
+  }
+  .selector:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
   /* ── Chat Feed ── */
   .card-feed{
@@ -64,10 +73,10 @@
     background:var(--glass-user);border:1px solid var(--glass-border);
     border-radius:var(--radius) var(--radius) 4px var(--radius);color:#d4d4d8;
   }
-  .bubble[data-role="frog"]{
+  .bubble[data-role="bot"]{
     align-self:flex-start;
-    background:var(--glass-frog);border:1px solid var(--frog-border);
-    border-radius:var(--radius) var(--radius) var(--radius) 4px;color:#bbf7d0;
+    background:var(--glass-bot);border:1px solid var(--bot-border);
+    border-radius:var(--radius) var(--radius) var(--radius) 4px;color:var(--bot-text);
   }
   .bubble[data-role="system"]{
     align-self:center;background:none;border:none;
@@ -83,7 +92,7 @@
   .typing i:nth-child(3){animation-delay:0.3s}
   @keyframes tp{0%,100%{opacity:0.2;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
 
-  /* ── Suggestions (horizontal scroll inside feed card) ── */
+  /* ── Suggestions ── */
   .suggestions{
     padding:8px 20px 12px;border-top:1px solid var(--glass-border);
     display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;
@@ -95,10 +104,10 @@
     border:1px solid var(--glass-border);border-radius:99px;
     padding:7px 14px;cursor:pointer;transition:0.15s;white-space:nowrap;
   }
-  .suggestions button:hover{color:var(--accent);border-color:var(--frog-border)}
+  .suggestions button:hover{color:var(--accent);border-color:var(--bot-border)}
   .suggestions button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-  /* ── InputArea Card ── */
+  /* ── InputArea ── */
   .card-input{
     background:var(--glass);border:1px solid var(--glass-border);
     border-radius:var(--radius);backdrop-filter:blur(12px);
@@ -119,53 +128,46 @@
   .card-input button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .card-input button svg{width:16px;height:16px;fill:#000}
 
-  /* ── A11y ── */
   [aria-live]{clip:rect(0,0,0,0);position:absolute;width:1px;height:1px;overflow:hidden}
 </style>
 </head>
 <body>
 
 <div class="bento" role="main">
-  <!-- Header Card -->
   <div class="card-header">
-    <div class="id"><div class="icon">🐸</div><h1>FrogLM</h1></div>
-    <div class="meta"><span id="status">loading</span></div>
-  </div>
-
-  <!-- Chat Feed Card -->
-  <div class="card-feed">
-    <div class="feed" id="feed" role="log" aria-label="Chat messages"></div>
-    <div class="suggestions" role="toolbar" aria-label="Suggested prompts">
-      <button onclick="send('hi frog')">hi frog</button>
-      <button onclick="send('are you hungry')">are you hungry</button>
-      <button onclick="send('tell me a joke')">tell me a joke</button>
-      <button onclick="send('do you like rain')">do you like rain</button>
-      <button onclick="send('what is bitcoin')">what is bitcoin</button>
-      <button onclick="send('what is the meaning of life')">meaning of life</button>
-      <button onclick="send('goodnight frog')">goodnight frog</button>
-      <button onclick="send('were you a tadpole')">were you a tadpole</button>
+    <div class="id"><div class="icon" id="iconEl">🐸</div><h1 id="nameEl">TinyLM</h1></div>
+    <div class="right">
+      <select id="selector" class="selector" aria-label="Choose personality"></select>
+      <div class="meta"><span id="status">loading</span></div>
     </div>
   </div>
 
-  <!-- Input Card -->
+  <div class="card-feed">
+    <div class="feed" id="feed" role="log" aria-label="Chat messages"></div>
+    <div class="suggestions" id="suggestions" role="toolbar" aria-label="Suggested prompts"></div>
+  </div>
+
   <div class="card-input">
-    <input id="inp" type="text" placeholder="talk to frog..." autocomplete="off" disabled
+    <input id="inp" type="text" placeholder="loading..." autocomplete="off" disabled
            aria-label="Message input" tabindex="0">
-    <button id="btn" onclick="go()" disabled aria-label="Send message" tabindex="0">
+    <button id="btn" aria-label="Send message" tabindex="0" disabled>
       <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
     </button>
   </div>
 </div>
 
-<!-- Screen reader announcements -->
 <div aria-live="polite" aria-atomic="true" id="sr"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.21.0/dist/ort.min.js"></script>
 <script>
-const MX=128,BOS=1,EOS=2;let S,T;
+const MX=128,BOS=1,EOS=2;
+let session=null,tokenizer=null,personality=null;
+
 const feed=document.getElementById('feed'),inp=document.getElementById('inp'),
       btn=document.getElementById('btn'),sr=document.getElementById('sr'),
-      statusEl=document.getElementById('status');
+      statusEl=document.getElementById('status'),iconEl=document.getElementById('iconEl'),
+      nameEl=document.getElementById('nameEl'),selector=document.getElementById('selector'),
+      suggestionsEl=document.getElementById('suggestions');
 
 // ── ByteLevel BPE ──
 const B2C={},C2B={};(()=>{const b=[];for(let i=33;i<=126;i++)b.push(i);for(let i=161;i<=172;i++)b.push(i);for(let i=174;i<=255;i++)b.push(i);const c=[...b];let n=0;for(let i=0;i<256;i++){if(!b.includes(i)){b.push(i);c.push(256+n);n++}}for(let i=0;i<b.length;i++){B2C[b[i]]=String.fromCharCode(c[i]);C2B[String.fromCharCode(c[i])]=b[i]}})();
@@ -177,64 +179,126 @@ class Tk{
   _b(w){let t=[...w];while(t.length>1){let b=Infinity,x=-1;for(let i=0;i<t.length-1;i++){const r=this.m.get(t[i]+' '+t[i+1]);if(r!==undefined&&r<b){b=r;x=i}}if(x<0)break;t=[...t.slice(0,x),t[x]+t[x+1],...t.slice(x+2)]}return t}
 }
 
-// ── Components ──
 function MessageBubble(text, role){
   const el=document.createElement('div');
   el.className='bubble';el.dataset.role=role;el.textContent=text;
-  el.setAttribute('aria-label',role==='frog'?'Frog says: '+text:'You said: '+text);
+  const speaker=role==='bot'?(personality?.label||'Bot'):'You';
+  el.setAttribute('aria-label',speaker+(role==='bot'?' says: ':' said: ')+text);
   return el;
 }
 
 function addMessage(text,role){
   feed.appendChild(MessageBubble(text,role));
   requestAnimationFrame(()=>feed.scrollTop=feed.scrollHeight);
-  if(role==='frog') sr.textContent='Frog says: '+text;
+  if(role==='bot') sr.textContent=(personality?.label||'Bot')+' says: '+text;
 }
 
 function showTyping(){
   const d=document.createElement('div');d.className='typing';d.id='tp';
-  d.innerHTML='<i></i><i></i><i></i>';d.setAttribute('aria-label','Frog is thinking');
+  d.innerHTML='<i></i><i></i><i></i>';
+  d.setAttribute('aria-label',(personality?.label||'Bot')+' is thinking');
   feed.appendChild(d);requestAnimationFrame(()=>feed.scrollTop=feed.scrollHeight);
-  sr.textContent='Frog is thinking...';
+  sr.textContent=(personality?.label||'Bot')+' is thinking...';
 }
 function hideTyping(){document.getElementById('tp')?.remove()}
 
-// ── Generation ──
 async function gen(text){
-  const u=T.enc('user\n'+text),nl=T.enc('\n'),a=T.enc('assistant\n');
-  let ids=[BOS,...u,EOS,...nl,BOS,...a];
+  const u=tokenizer.enc('user\n'+text),nl=tokenizer.enc('\n'),a=tokenizer.enc('assistant\n');
+  const prefix=[BOS,...u,EOS,...nl,BOS,...a];
+  let ids=[...prefix];
   for(let i=0;i<64&&ids.length<MX;i++){
-    const o=await S.run({input_ids:new ort.Tensor('int64',BigInt64Array.from(ids.map(x=>BigInt(x))),[1,ids.length])});
+    const o=await session.run({input_ids:new ort.Tensor('int64',BigInt64Array.from(ids.map(x=>BigInt(x))),[1,ids.length])});
     const l=o.logits.data,V=o.logits.dims[2],sl=l.slice((ids.length-1)*V,ids.length*V);
     let sc=Array.from(sl).map((v,i)=>[v/0.7,i]);sc.sort((a,b)=>b[0]-a[0]);sc=sc.slice(0,40);
     const mx=sc[0][0],ex=sc.map(s=>Math.exp(s[0]-mx)),sm=ex.reduce((a,b)=>a+b),pr=ex.map(e=>e/sm);
     let r=Math.random(),nx=sc[0][1];for(let j=0;j<pr.length;j++){r-=pr[j];if(r<=0){nx=sc[j][1];break}}
     if(nx===EOS)break;ids.push(nx);
   }
-  return T.dec(ids.slice([BOS,...u,EOS,...nl,BOS,...a].length));
+  return tokenizer.dec(ids.slice(prefix.length));
 }
 
-// ── ChatContainer logic ──
 async function send(t){
-  if(!S||!t.trim())return;
+  if(!session||!t.trim())return;
   addMessage(t,'user');inp.value='';inp.disabled=true;btn.disabled=true;showTyping();
-  try{const r=await gen(t.trim());hideTyping();addMessage(r||'...','frog')}
+  try{const r=await gen(t.trim());hideTyping();addMessage(r||'...','bot')}
   catch(e){hideTyping();addMessage('something went wrong.','system');console.error(e)}
   inp.disabled=false;btn.disabled=false;inp.focus();
 }
-function go(){send(inp.value)}
-inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();go()}});
+btn.addEventListener('click',()=>send(inp.value));
+inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();send(inp.value)}});
 
-// ── Init ──
-(async()=>{
+function applyTheme(p){
+  document.documentElement.style.setProperty('--accent',p.accent);
+  document.documentElement.style.setProperty('--accent-dark',p.accentDark||p.accent);
+  // Derive translucent variants from accent. Quick rgba conversion.
+  const hex=p.accent.replace('#','');
+  const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
+  document.documentElement.style.setProperty('--glass-bot',`rgba(${r},${g},${b},0.06)`);
+  document.documentElement.style.setProperty('--bot-border',`rgba(${r},${g},${b},0.12)`);
+  // Light tint for bot bubble text — mix accent with white.
+  const tr=Math.round(r+(255-r)*0.6),tg=Math.round(g+(255-g)*0.6),tb=Math.round(b+(255-b)*0.6);
+  document.documentElement.style.setProperty('--bot-text',`rgb(${tr},${tg},${tb})`);
+}
+
+function renderSuggestions(p){
+  suggestionsEl.innerHTML='';
+  for(const s of p.suggestions||[]){
+    const b=document.createElement('button');
+    b.textContent=s;b.addEventListener('click',()=>send(s));
+    suggestionsEl.appendChild(b);
+  }
+}
+
+async function loadPersonality(p){
+  personality=p;
+  iconEl.textContent=p.emoji;
+  nameEl.textContent=p.name;
+  document.title=p.name;
+  inp.placeholder=p.placeholder||('talk to '+p.label.toLowerCase()+'...');
+  applyTheme(p);
+  renderSuggestions(p);
+  feed.innerHTML='';
+  inp.disabled=true;btn.disabled=true;
+  statusEl.textContent='loading';
   try{
-    statusEl.textContent='loading';
-    T=new Tk(await(await fetch('tokenizer.json')).json());
-    S=await ort.InferenceSession.create('model_q.onnx',{executionProviders:['wasm']});
+    tokenizer=new Tk(await(await fetch(`${p.id}/tokenizer.json`)).json());
+    session=await ort.InferenceSession.create(`${p.id}/model_q.onnx`,{executionProviders:['wasm']});
     statusEl.textContent='8.7M params · wasm';
     inp.disabled=false;btn.disabled=false;inp.focus();
-    addMessage('ribbit. the pond is nice today.','frog');
-  }catch(e){statusEl.textContent='error';addMessage('failed to load model.','system');console.error(e)}
+    if(p.greeting) addMessage(p.greeting,'bot');
+  }catch(e){
+    statusEl.textContent='error';
+    addMessage(`failed to load ${p.label.toLowerCase()} model. did you run \`make ${p.id}-export\`?`,'system');
+    console.error(e);
+  }
+}
+
+function getInitialId(manifest){
+  const params=new URLSearchParams(location.search);
+  const requested=params.get('p');
+  if(requested && manifest.personalities.some(x=>x.id===requested)) return requested;
+  return manifest.default || manifest.personalities[0].id;
+}
+
+(async()=>{
+  let manifest;
+  try{manifest=await(await fetch('manifest.json')).json()}
+  catch(e){statusEl.textContent='error';addMessage('failed to load manifest.json','system');console.error(e);return}
+
+  for(const p of manifest.personalities){
+    const opt=document.createElement('option');opt.value=p.id;opt.textContent=`${p.emoji} ${p.label}`;
+    selector.appendChild(opt);
+  }
+  const initial=getInitialId(manifest);
+  selector.value=initial;
+  selector.addEventListener('change',()=>{
+    const p=manifest.personalities.find(x=>x.id===selector.value);
+    if(!p)return;
+    const url=new URL(location.href);url.searchParams.set('p',p.id);
+    history.replaceState(null,'',url);
+    loadPersonality(p);
+  });
+  await loadPersonality(manifest.personalities.find(x=>x.id===initial));
 })();
 </script>
 </body>

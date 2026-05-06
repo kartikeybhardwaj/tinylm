@@ -54,14 +54,17 @@ python -m catlm chat -p "do you like dogs"
 
 ## Browser Demo
 
-After training, export and serve locally:
+A single page serves every personality. Export the model(s) you want, then run the demo:
 
 ```bash
-make frog-demo   # http://localhost:8000
-make cat-demo    # http://localhost:8001
+make frog-export   # writes docs/frog/{model_q.onnx,tokenizer.json}
+make cat-export    # writes docs/cat/{model_q.onnx,tokenizer.json}
+make demo          # http://localhost:8000
 ```
 
-Runs entirely client-side via WebAssembly — no server, no API keys. The quantized model is ~9MB.
+The page reads `docs/manifest.json` to populate a personality dropdown. Use `?p=frog` or `?p=cat` to deep-link. To add a new personality to the demo, add an entry to `manifest.json` after exporting — no HTML changes needed.
+
+Runs entirely client-side via WebAssembly — no server, no API keys. Each quantized model is ~9MB.
 
 ---
 
@@ -161,10 +164,9 @@ That's it. The core engine handles everything else.
 | `python -m catlm train` | Train cat model |
 | `python -m catlm chat` | Chat with cat |
 | `python -m catlm eval` | Run cat eval cases |
-| `make frog-export` | Export frog ONNX + quantize |
-| `make frog-demo` | Export + serve frog browser demo |
-| `make cat-export` | Export cat ONNX + quantize |
-| `make cat-demo` | Export + serve cat browser demo |
+| `make frog-export` | Export frog ONNX + quantize → `docs/frog/` |
+| `make cat-export` | Export cat ONNX + quantize → `docs/cat/` |
+| `make demo` | Serve unified browser demo at `http://localhost:8000` |
 
 ---
 
