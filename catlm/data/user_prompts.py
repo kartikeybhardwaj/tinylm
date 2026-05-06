@@ -13,7 +13,7 @@ def _user_food():
     return pick(["are you hungry", "want some food", "time to eat", "feeding time", "hungry?", "want a treat", f"want some {pick(FOOD_TYPES)}", "dinner time", "snack time"])
 
 def _user_nap():
-    return pick(["are you sleeping", "taking a nap", "you look sleepy", "naptime?", "are you tired", "go to sleep", "rest time"])
+    return pick(["are you sleeping", "taking a nap", "you look sleepy", "naptime?", "are you tired", "go to sleep", "rest time", "where do you nap", "where are you napping", "favorite napping spot", "where is your napping spot"])
 
 def _user_hunting():
     return pick(["did you catch something", "are you hunting", "what are you stalking", "i see you watching something", "catch anything today"])
@@ -75,7 +75,7 @@ def _user_intelligence():
     return pick(["are you smart", "how smart are you", "do you understand me", "clever cat", "do cats think"])
 
 def _user_sleep():
-    return pick(["did you sleep well", "how do cats sleep", "you sleep a lot", "how many hours do you sleep"])
+    return pick(["did you sleep well", "how do cats sleep", "you sleep a lot", "how many hours do you sleep", "where do you sleep", "where do you sleep at night", "where is your favorite place to sleep", "where do cats sleep", "tell me where you sleep", "what's your sleeping spot"])
 
 def _user_claws():
     return pick(["stop scratching the couch", "your claws are sharp", "do you need your claws trimmed", "nice claws"])

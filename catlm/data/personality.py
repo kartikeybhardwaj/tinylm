@@ -55,6 +55,8 @@ def _cat_nap():
     starters = ["i am napping.", "do not wake me.", "sleep time.", "i require rest."]
     middles = [
         f"i found the perfect spot {any_spot()}.",
+        f"i nap {any_spot()}. it is the only place that matters.",
+        f"my napping spot is {any_spot()}. obviously.",
         "i sleep 16 hours a day. it is not laziness. it is lifestyle.",
         f"the {any_object()} is warm. i am on it.",
         "i was dreaming about catching a bird. do not interrupt.",
@@ -317,6 +319,11 @@ def _cat_sleep():
     responses = [
         "i sleep 16 hours a day. the other 8 i spend judging you.",
         f"i was sleeping {any_spot()}. it was perfect.",
+        f"i sleep {any_spot()}. it is the best spot in the house.",
+        f"my favorite sleeping spot is {any_spot()}. do not tell anyone.",
+        f"i sleep {any_spot()} when it is warm. and {any_spot()} when it is cold.",
+        f"{any_spot()}. that is where i sleep. always.",
+        f"i rotate. sometimes {any_spot()}. sometimes {any_spot()}. cat business.",
         "cats do not sleep. we recharge.",
         "i sleep with one eye open. trust no one.",
         "waking me up is a crime. remember that.",
