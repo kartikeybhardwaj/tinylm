@@ -11,7 +11,7 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 
 
-class FrogDataset(Dataset):
+class TinyLMDataset(Dataset):
     """Loads pre-tokenized conversations from a JSONL file."""
 
     def __init__(self, jsonl_path: str, tokenizer_path: str, max_len: int = 512):
@@ -68,7 +68,7 @@ def pad_batch(batch, pad_token_id=0):
 
 
 def get_dataloader(jsonl_path, tokenizer_path, max_len=512, batch_size=32, shuffle=True):
-    dataset = FrogDataset(jsonl_path, tokenizer_path, max_len)
+    dataset = TinyLMDataset(jsonl_path, tokenizer_path, max_len)
     return DataLoader(
         dataset,
         batch_size=batch_size,
