@@ -40,6 +40,26 @@
         "goodnight",
         "where do you sleep"
       ]
+    },
+    {
+      "id": "fish",
+      "name": "FishLM",
+      "label": "Fish",
+      "emoji": "🐟",
+      "accent": "#22d3ee",
+      "accentDark": "#0e7490",
+      "greeting": "blub. oh hi. wait who are you. that's ok.",
+      "placeholder": "talk to fish...",
+      "suggestions": [
+        "hi fish",
+        "do you remember me",
+        "are you hungry",
+        "tell me about your tank",
+        "what is bitcoin",
+        "what is the meaning of life",
+        "where do you sleep",
+        "what is outside the tank"
+      ]
     }
   ]
 }
